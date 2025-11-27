@@ -62,16 +62,26 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
     - name: Deploy to VM
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VM_HOST }}
         username: ${{ secrets.VM_USERNAME }}
         key: ${{ secrets.VM_SSH_KEY }}
+        port: 22
+        timeout: 300s
         script: |
           cd /opt/mean-app || (mkdir -p /opt/mean-app && cd /opt/mean-app && git clone https://github.com/${{ github.repository }}.git .)
           cd /opt/mean-app
           git pull origin main || git pull origin master || true
+          cd c || cd .
           export DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}
           export DOCKER_HUB_TOKEN=${{ secrets.DOCKER_HUB_TOKEN }}
           echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" > .env
