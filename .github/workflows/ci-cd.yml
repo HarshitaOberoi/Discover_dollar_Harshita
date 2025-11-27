@@ -101,4 +101,3 @@ jobs:
           sudo docker system prune -f
           echo "Deployment completed successfully!"
           sudo docker ps
-
