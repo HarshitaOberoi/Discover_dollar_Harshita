@@ -63,16 +63,23 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Setup SSH
+      env:
+        VM_HOST: ${{ secrets.VM_HOST }}
+        VM_USERNAME: ${{ secrets.VM_USERNAME }}
+        VM_SSH_KEY: ${{ secrets.VM_SSH_KEY }}
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/deploy_key
+        echo "$VM_SSH_KEY" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+        ssh-keyscan -H "$VM_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
         ls -la ~/.ssh/
 
     - name: Test SSH Connection
+      env:
+        VM_HOST: ${{ secrets.VM_HOST }}
+        VM_USERNAME: ${{ secrets.VM_USERNAME }}
       run: |
-        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=~/.ssh/known_hosts ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} "echo 'SSH test successful'"
+        ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=~/.ssh/known_hosts "$VM_USERNAME@$VM_HOST" "echo 'SSH test successful'"
 
     - name: Deploy to VM
       uses: appleboy/ssh-action@v1.0.3
@@ -101,3 +108,4 @@ jobs:
           sudo docker system prune -f
           echo "Deployment completed successfully!"
           sudo docker ps
+
